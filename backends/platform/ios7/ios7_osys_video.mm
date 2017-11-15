@@ -61,16 +61,29 @@ void OSystem_iOS7::fatalError() {
 	}
 }
 
+static inline void execute_on_main_thread(void (^block)(void)) {
+    if ([NSThread currentThread] == [NSThread mainThread]) {
+        block();
+    }
+    else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+}
+
 void OSystem_iOS7::engineInit() {
 	EventsBaseBackend::engineInit();
 	// Prevent the device going to sleep during game play (and in particular cut scenes)
-	[[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    execute_on_main_thread(^{
+        [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    });
 }
 
 void OSystem_iOS7::engineDone() {
 	EventsBaseBackend::engineDone();
 	// Allow the device going to sleep if idle while in the Launcher
-	[[UIApplication sharedApplication] setIdleTimerDisabled:NO];
+    execute_on_main_thread(^{
+        [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    });
 }
 
 void OSystem_iOS7::initVideoContext() {
@@ -119,15 +132,6 @@ Common::List<Graphics::PixelFormat> OSystem_iOS7::getSupportedFormats() const {
 	return list;
 }
 #endif
-
-static inline void execute_on_main_thread(void (^block)(void)) {
-	if ([NSThread currentThread] == [NSThread mainThread]) {
-		block();
-	}
-	else {
-		dispatch_sync(dispatch_get_main_queue(), block);
-	}
-}
 
 void OSystem_iOS7::initSize(uint width, uint height, const Graphics::PixelFormat *format) {
 	//printf("initSize(%u, %u, %p)\n", width, height, (const void *)format);
