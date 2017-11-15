@@ -91,6 +91,10 @@
 	[_view deviceOrientationChanged:screenOrientation];
 }
 
+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+    return UIInterfaceOrientationMaskLandscape;
+}
+
 + (iOS7AppDelegate *)iOS7AppDelegate {
 	UIApplication *app = [UIApplication sharedApplication];
 	return (iOS7AppDelegate *) app.delegate;
