@@ -138,7 +138,7 @@ void BrowserDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data
 		// browser mode, thus we will invalidate the selection
 		// when the user selects an directory over here.
 		if (data != (uint32)-1 && _isDirBrowser && !_nodeContent[data].isDirectory())
-			_fileList->setSelected(-1);
+			_fileList->setSelected(-1); 
 		break;
 	case kHiddenCmd:
 		// Update whether the user wants hidden files to be shown

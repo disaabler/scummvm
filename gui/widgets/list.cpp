@@ -45,7 +45,7 @@ ListWidget::ListWidget(Dialog *boss, const String &name, const char *tooltip, ui
 	_scrollBar = new ScrollBarWidget(this, _w - _scrollBarWidth + 1, 0, _scrollBarWidth, _h);
 	_scrollBar->setTarget(this);
 
-	setFlags(WIDGET_ENABLED | WIDGET_CLEARBG | WIDGET_RETAIN_FOCUS | WIDGET_WANT_TICKLE);
+	setFlags(WIDGET_ENABLED | WIDGET_CLEARBG | WIDGET_RETAIN_FOCUS | WIDGET_WANT_TICKLE | WIDGET_TRACK_MOUSE);
 	_type = kListWidget;
 	_editMode = false;
 	_numberingMode = kListNumberingOne;
@@ -63,6 +63,8 @@ ListWidget::ListWidget(Dialog *boss, const String &name, const char *tooltip, ui
 
 	_quickSelect = true;
 	_editColor = ThemeEngine::kFontColorNormal;
+
+	_scrollOffset = 0;
 }
 
 ListWidget::ListWidget(Dialog *boss, int x, int y, int w, int h, const char *tooltip, uint32 cmd)
@@ -95,6 +97,8 @@ ListWidget::ListWidget(Dialog *boss, int x, int y, int w, int h, const char *too
 
 	_quickSelect = true;
 	_editColor = ThemeEngine::kFontColorNormal;
+
+	_scrollOffset = 0;
 }
 
 ListWidget::~ListWidget() {
@@ -139,12 +143,14 @@ void ListWidget::setSelected(int item) {
 			abortEditMode();
 
 		_selectedItem = item;
-
 		// Notify clients that the selection changed.
 		sendCommand(kListSelectionChangedCmd, _selectedItem);
 
-		_currentPos = _selectedItem - _entriesPerPage / 2;
-		scrollToCurrent();
+		if (item != -1) {
+			_currentPos = _selectedItem - _entriesPerPage / 2;
+			scrollToCurrent();
+		}
+
 		draw();
 	}
 }
@@ -265,9 +271,39 @@ void ListWidget::handleMouseUp(int x, int y, int button, int clickCount) {
 }
 
 void ListWidget::handleMouseWheel(int x, int y, int direction) {
-	_scrollBar->handleMouseWheel(x, y, direction);
+	_scrollBar->handleScroll(direction * kLineHeight * -1, kLineHeight);
 }
 
+#ifdef ENABLE_TOUCHMAPPER
+void ListWidget::handleFingerMoved(int x, int y, int deltax, int deltay, int button) {
+	_scrollBar->handleScroll(deltay, kLineHeight);
+}
+
+void ListWidget::handleFingerSingleTap(int x, int y, int button, int clickCount) {
+	if ((_selectedItem == findItem(x, y)) && _selectedItem >= 0) {
+		sendCommand(kListItemDoubleClickedCmd, _selectedItem);
+	}
+}
+
+void ListWidget::handleFingerDown(int x, int y, int button, int clickCount) {
+	if (!isEnabled())
+		return;
+
+	int newSelectedItem = findItem(x, y);
+
+	if (_selectedItem != newSelectedItem && newSelectedItem != -1) {
+		if (_editMode)
+			abortEditMode();
+		_selectedItem = newSelectedItem;
+		sendCommand(kListSelectionChangedCmd, _selectedItem);
+	}
+
+	// TODO: Determine where inside the string the user clicked and place the
+	// caret accordingly.
+	// See _editScrollOffset and EditTextWidget::handleMouseDown.
+	draw();
+}
+#endif
 
 int ListWidget::findItem(int x, int y) const {
 	if (y < _topPadding) return -1;
@@ -493,6 +529,33 @@ void ListWidget::handleCommand(CommandSender *sender, uint32 cmd, uint32 data) {
 			((GUI::Dialog *)_boss)->setFocusWidget(this);
 		}
 		break;
+	case kSetScrollOffset:
+		if (_currentPos == 0 && (int)data > 0 && _scrollOffset >= 0)
+			data = 0;
+		
+		if ((_currentPos == ((int)_list.size() - _entriesPerPage)) && (int)data < 0)
+			data = 0;
+
+		_scrollOffset = _scrollOffset + (int)data;
+
+		if (_scrollOffset > 0) {
+			while (_scrollOffset >= kLineHeight) {
+				_scrollOffset -= kLineHeight;
+				_currentPos--;
+			}
+		} else if (_scrollOffset < 0) {
+			while (_scrollOffset <= kLineHeight*-1) {
+				_scrollOffset += kLineHeight;
+				_currentPos++;
+			}
+		}
+
+		checkBounds();
+		draw();
+		
+		// Scrollbar actions cause list focus (which triggers a redraw)
+		// NOTE: ListWidget's boss is always GUI::Dialog
+		((GUI::Dialog *)_boss)->setFocusWidget(this);
 	}
 }
 
@@ -501,7 +564,10 @@ void ListWidget::drawWidget() {
 	Common::String buffer;
 
 	// Draw a thin frame around the list.
+
 	g_gui.theme()->drawWidgetBackgroundClip(Common::Rect(_x, _y, _x + _w, _y + _h), getBossClipRect(), 0, ThemeEngine::kWidgetBackgroundBorder);
+	const Common::Rect &r = Common::Rect(_x + _leftPadding, _y, _x + _leftPadding + getEditRect().width(), _y + _h);
+	setTextDrawableArea(r);
 	const int scrollbarW = (_scrollBar && _scrollBar->isVisible()) ? _scrollBarWidth : 0;
 
 	// Draw the list items

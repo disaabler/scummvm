@@ -137,6 +137,22 @@ public:
 	virtual bool handleKeyUp(Common::KeyState state) { return false; }	// Return true if the event was handled
 	virtual void handleTickle() {}
 
+#ifdef ENABLE_TOUCHMAPPER
+	virtual void handleFingerDown(int x, int y, int button, int clickCount) {
+		// Use mouse-handler if no finger-handler is specified
+		handleMouseDown(x, y, button, clickCount);
+	}
+	virtual void handleFingerSingleTap(int x, int y, int button, int clickCount) {
+		// Use mouse-handler if no finger-handler is specified
+		handleMouseUp(x, y, button, clickCount);
+	}
+
+	virtual void handleFingerMoved(int x, int y, int deltax, int deltay, int button) {
+		// Use mouse-handler if no finger-handler is specified
+		handleMouseMoved(x, y, button);
+	}
+#endif
+
 	void draw();
 	void receivedFocus() { _hasFocus = true; receivedFocusWidget(); }
 	void lostFocus() { _hasFocus = false; lostFocusWidget(); }
@@ -215,6 +231,10 @@ public:
 	void handleMouseDown(int x, int y, int button, int clickCount);
 	void handleMouseEntered(int button)	{ if (_duringPress) { setFlags(WIDGET_PRESSED); } else { setFlags(WIDGET_HILITED); } draw(); }
 	void handleMouseLeft(int button)	{ clearFlags(WIDGET_HILITED | WIDGET_PRESSED); draw(); }
+
+#ifdef ENABLE_TOUCHMAPPER
+	void handleFingerMoved(int x, int y, int deltax, int deltay, int button);
+#endif
 
 	void setHighLighted(bool enable);
 	void setPressedState();
