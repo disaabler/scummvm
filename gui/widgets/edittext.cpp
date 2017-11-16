@@ -88,12 +88,6 @@ void EditTextWidget::handleMouseDown(int x, int y, int button, int clickCount) {
 	}
 	if (setCaretPos(i))
 		draw();
-
-#ifdef TIZEN
-	// Display the virtual keypad to allow text entry. Samsung app-store testers expected
-	// the keypad to be displayed when clicking the filter edit control in the laucher gui.
-	g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, true);
-#endif
 }
 
 void EditTextWidget::drawWidget() {
@@ -115,27 +109,39 @@ Common::Rect EditTextWidget::getEditRect() const {
 }
 
 void EditTextWidget::receivedFocusWidget() {
+    // Display the virtual keypad to allow text entry. Samsung app-store testers expected
+    // the keypad to be displayed when clicking the filter edit control in the laucher gui.
+    g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, true);
 }
 
 void EditTextWidget::lostFocusWidget() {
 	// If we loose focus, 'commit' the user changes
 	_backupString = _editString;
 	drawCaret(true);
+    
+    g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, false);
 }
 
 void EditTextWidget::startEditMode() {
+    // Display the virtual keypad to allow text entry. Samsung app-store testers expected
+    // the keypad to be displayed when clicking the filter edit control in the laucher gui.
+    g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, true);
 }
 
 void EditTextWidget::endEditMode() {
 	releaseFocus();
 
 	sendCommand(_finishCmd, 0);
+    
+    g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, false);
 }
 
 void EditTextWidget::abortEditMode() {
 	setEditString(_backupString);
 	sendCommand(_cmd, 0);
 	releaseFocus();
+    
+    g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, false);
 }
 
 } // End of namespace GUI

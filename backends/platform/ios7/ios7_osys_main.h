@@ -52,6 +52,8 @@ struct AQCallbackStruct {
 	AudioStreamBasicDescription dataFormat;
 };
 
+extern void execute_on_main_thread(void (^block)(void));
+
 class OSystem_iOS7 : public EventsBaseBackend, public PaletteManager {
 protected:
 	static const OSystem::GraphicsMode s_supportedGraphicsModes[];

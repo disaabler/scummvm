@@ -26,7 +26,7 @@
 #include "zvision/scripting/control.h"
 #include "zvision/text/text.h"
 #include "zvision/text/string_manager.h"
-
+#include "common/system.h"
 #include "common/rect.h"
 
 namespace Video {
@@ -62,10 +62,12 @@ public:
 	void focus() {
 		_focused = true;
 		_textChanged = true;
+        g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, true);
 	}
 	void unfocus() {
 		_focused = false;
 		_textChanged = true;
+        g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, false);
 	}
 	bool onMouseUp(const Common::Point &screenSpacePos, const Common::Point &backgroundImageSpacePos);
 	bool onMouseMove(const Common::Point &screenSpacePos, const Common::Point &backgroundImageSpacePos);

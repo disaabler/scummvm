@@ -430,6 +430,11 @@ uint getSizeNextPOT(uint size) {
 
 	// Initialize the OpenGL ES context
 	[self createContext];
+    
+    _keyboardView = [[SoftKeyboard alloc] initWithFrame:CGRectZero];
+    [_keyboardView setInputDelegate:self];
+    [self addSubview:[_keyboardView inputView]];
+    [self addSubview: _keyboardView];
 
 	return self;
 }
@@ -448,6 +453,22 @@ uint getSizeNextPOT(uint size) {
 
 	[_eventLock release];
 	[super dealloc];
+}
+
+- (BOOL)canBecomeFirstResponder {
+    return YES;
+}
+
+- (BOOL)isFirstResponder {
+    return [[_keyboardView inputView] isFirstResponder];
+}
+
+- (BOOL)becomeFirstResponder {
+    return [[_keyboardView inputView] becomeFirstResponder];
+}
+
+- (BOOL)resignFirstResponder {
+    return [[_keyboardView inputView] resignFirstResponder];
 }
 
 - (void)setFilterModeForTexture:(GLuint)tex {
@@ -771,14 +792,6 @@ uint getSizeNextPOT(uint size) {
 		int height = (int)(screenWidth * ratio);
 		//printf("Making rect (%u, %u)\n", screenWidth, height);
 		_gameScreenRect = CGRectMake(0, 0, screenWidth, height);
-
-		CGRect keyFrame = CGRectMake(0.0f, 0.0f, 0.0f, 0.0f);
-		if (_keyboardView == nil) {
-			_keyboardView = [[SoftKeyboard alloc] initWithFrame:keyFrame];
-			[_keyboardView setInputDelegate:self];
-			[self addSubview:[_keyboardView inputView]];
-			[self addSubview: _keyboardView];
-		}
 
 		[_keyboardView showKeyboard];
 		overlayPortraitRatio = (_videoContext.overlayHeight * ratio) / _videoContext.overlayWidth;

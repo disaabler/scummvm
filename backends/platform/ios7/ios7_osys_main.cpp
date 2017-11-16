@@ -178,27 +178,6 @@ bool OSystem_iOS7::hasFeature(Feature f) {
 	}
 }
 
-void OSystem_iOS7::setFeatureState(Feature f, bool enable) {
-	switch (f) {
-	case kFeatureCursorPalette:
-		if (_mouseCursorPaletteEnabled != enable) {
-			_mouseNeedTextureUpdate = true;
-			_mouseDirty = true;
-			_mouseCursorPaletteEnabled = enable;
-		}
-		break;
-	case kFeatureFilteringMode:
-		_videoContext->filtering = enable;
-		break;
-	case kFeatureAspectRatioCorrection:
-		_videoContext->asprectRatioCorrection = enable;
-		break;
-
-	default:
-		break;
-	}
-}
-
 bool OSystem_iOS7::getFeatureState(Feature f) {
 	switch (f) {
 	case kFeatureCursorPalette:

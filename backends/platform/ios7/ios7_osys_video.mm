@@ -51,6 +51,45 @@ static void displayAlert(void *ctx) {
 	[alert autorelease];
 }
 
+void execute_on_main_thread(void (^block)(void)) {
+    if ([NSThread currentThread] == [NSThread mainThread]) {
+        block();
+    }
+    else {
+        dispatch_sync(dispatch_get_main_queue(), block);
+    }
+}
+
+void OSystem_iOS7::setFeatureState(Feature f, bool enable) {
+    switch (f) {
+        case kFeatureCursorPalette:
+            if (_mouseCursorPaletteEnabled != enable) {
+                _mouseNeedTextureUpdate = true;
+                _mouseDirty = true;
+                _mouseCursorPaletteEnabled = enable;
+            }
+            break;
+        case kFeatureFilteringMode:
+            _videoContext->filtering = enable;
+            break;
+        case kFeatureAspectRatioCorrection:
+            _videoContext->asprectRatioCorrection = enable;
+            break;
+        case kFeatureVirtualKeyboard: {
+            execute_on_main_thread(^{
+                if (enable) {
+                    [[iOS7AppDelegate iPhoneView] becomeFirstResponder];
+                } else {
+                    [[iOS7AppDelegate iPhoneView] endEditing:YES];
+                }
+            });
+        }
+            break;
+        default:
+            break;
+    }
+}
+
 void OSystem_iOS7::fatalError() {
 	if (_lastErrorMessage) {
 		dispatch_async_f(dispatch_get_main_queue(), _lastErrorMessage, displayAlert);
@@ -59,15 +98,6 @@ void OSystem_iOS7::fatalError() {
 	else {
 		OSystem::fatalError();
 	}
-}
-
-static inline void execute_on_main_thread(void (^block)(void)) {
-    if ([NSThread currentThread] == [NSThread mainThread]) {
-        block();
-    }
-    else {
-        dispatch_sync(dispatch_get_main_queue(), block);
-    }
 }
 
 void OSystem_iOS7::engineInit() {
