@@ -209,12 +209,12 @@ void DownloadDialog::reflowLayout() {
 
 namespace {
 Common::String getHumanReadableBytes(uint64 bytes, Common::String &unitsOut) {
-	Common::String result = Common::String::format("%lu", bytes);
+	Common::String result = Common::String::format("%llu", bytes);
 	unitsOut = "B";
 
 	if (bytes >= 1024) {
 		bytes /= 1024;
-		result = Common::String::format("%lu", bytes);
+		result = Common::String::format("%llu", bytes);
 		unitsOut = "KB";
 	}
 
